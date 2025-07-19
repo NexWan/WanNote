@@ -2,9 +2,20 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
-    "opener:default"
+    "opener:default",
+    "fs:default",
+    "fs:allow-exists",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+  "fs:scope-appconfig",
+  "fs:scope-appconfig-recursive",
+  "fs:allow-appconfig-write-recursive",
+  "fs:allow-appconfig-meta-recursive",
+  "dialog:default"
   ]
 }
