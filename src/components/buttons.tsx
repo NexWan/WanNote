@@ -5,6 +5,7 @@ Path: src/components/buttons.tsx
 
 */
 import {PlusOutlined } from "@ant-design/icons";
+import { CheckOutlined } from "@ant-design/icons";
 
 type ButtonProps = {
     onClick: () => void;
@@ -24,4 +25,16 @@ const NewButton: React.FC<ButtonProps> = ({ onClick, label, className }) => {
     );
 };
 
-export default NewButton;
+const SaveButton: React.FC<ButtonProps> = ({ onClick, label, className }) => {
+    return (
+        <button
+            onClick={onClick}
+            className={`btn btn-primary ${className}`}
+        >
+            <CheckOutlined className="mr-2" />
+            {label}
+        </button>
+    );
+};
+
+export { NewButton, SaveButton };

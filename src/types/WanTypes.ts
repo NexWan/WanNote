@@ -4,7 +4,7 @@ export type ProjectStructure = {
     createdAt: string; // ISO date string of when the project was created
     updatedAt: string; // ISO date string of when the project was last updated
     notes: Note[]; // Array of notes in the project
-    projectPath: string; // Path to the project directory
+    path: string; // Path to the project directory
 };
 
 export type Note = {

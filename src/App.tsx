@@ -1,6 +1,7 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
 import FirstTimeView from "./views/FirstTimeView";
 import NewProjectView from "./views/NewProjectView";
+import ProjectView from "./views/ProjectView"; // Assuming you have a ProjectView component
 import { ROUTES } from "./constants/routes";
 import { useEffect, useState } from "react";
 import { loadOrCreateSettings, AppSettings } from "./lib/settings";
@@ -31,6 +32,7 @@ function App() {
           element={isFirstTime ? <FirstTimeView /> : <NewProjectView />}
         />
         <Route path={ROUTES.NEW_PROJECT} element={<NewProjectView />} />
+        <Route path={ROUTES.PROJECT_VIEW} element={<ProjectView />} />
       </Routes>
     </HashRouter>
   );

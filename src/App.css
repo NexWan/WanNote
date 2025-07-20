@@ -15,3 +15,7 @@ body {
   width: 100vw !important;
   height: 100vh !important;
 }
+
+.markdown-preview > * {
+  all: revert;
+}

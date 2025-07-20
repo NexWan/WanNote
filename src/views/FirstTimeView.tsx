@@ -1,4 +1,4 @@
-import NewButton from "../components/buttons";
+import {NewButton} from "../components/buttons";
 import {ROUTES} from "../constants/routes";
 import { useNavigate } from "react-router";
 
