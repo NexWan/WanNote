@@ -4,8 +4,7 @@ Button components for the application
 Path: src/components/buttons.tsx
 
 */
-import {PlusOutlined } from "@ant-design/icons";
-import { CheckOutlined } from "@ant-design/icons";
+import {PlusOutlined, CheckOutlined, FolderOpenOutlined } from "@ant-design/icons";
 
 type ButtonProps = {
     onClick: () => void;
@@ -37,4 +36,16 @@ const SaveButton: React.FC<ButtonProps> = ({ onClick, label, className }) => {
     );
 };
 
-export { NewButton, SaveButton };
+const OpenButton: React.FC<ButtonProps> = ({ onClick, label, className }) => {
+    return (
+        <button
+            onClick={onClick}
+            className={`btn btn-secondary ${className}`}
+        >
+            <FolderOpenOutlined className="mr-2" />
+            {label}
+        </button>
+    );
+}
+
+export { NewButton, SaveButton, OpenButton };
