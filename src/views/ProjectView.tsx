@@ -4,6 +4,7 @@ import { ProjectStructure } from "../types/WanTypes";
 import { readTextFile } from "@tauri-apps/plugin-fs";
 import { message } from "@tauri-apps/plugin-dialog";
 import ProjectLayout from "../components/ProjectLayout";
+import { loadOrCreateSettings, saveSettings, AppSettings } from "../lib/settings";
 
 
 export default function ProjectView() {
@@ -27,6 +28,11 @@ export default function ProjectView() {
                 await message("Failed to load project: " + error, "Error");
                 console.error("Error loading project:", error);
             }
+
+            // Save the last opened project path in settings
+            const settings = await loadOrCreateSettings();
+            settings.lastOpenedProject = state.projectPath;
+            await saveSettings(settings);
         }
 
         loadProject();
@@ -37,7 +43,7 @@ export default function ProjectView() {
     }
 
     return (
-        <main className="container mx-auto w-full h-full flex flex-col items-center justify-center">
+        <main className="w-full h-full flex flex-col items-center justify-center">
             <ProjectLayout project={project} />
         </main>
     );

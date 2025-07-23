@@ -2,6 +2,7 @@
 @plugin "daisyui" {
   themes: night --default;
 }
+@plugin "@tailwindcss/typography";
 
 @font-face {
   font-family: 'Fredoka';
@@ -18,4 +19,9 @@ body {
 
 .markdown-preview > * {
   all: revert;
+}
+
+textarea {
+  outline: none;
+  resize: none;
 }

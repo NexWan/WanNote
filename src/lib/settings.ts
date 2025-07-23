@@ -10,6 +10,7 @@ export type AppSettings = {
   firstTimeSetup: boolean;
   theme: 'night';
   font: string;
+  lastOpenedProject?: string; // Optional field to store the last opened project path
 };
 
 const CONFIG_FILE_NAME = 'settings.json';
@@ -38,4 +39,10 @@ export async function loadOrCreateSettings(): Promise<AppSettings> {
 
     return defaultSettings;
   }
+}
+
+export async function saveSettings(settings: AppSettings): Promise<void> {
+  await writeTextFile(CONFIG_FILE_NAME, JSON.stringify(settings, null, 2), {
+    baseDir: BaseDirectory.AppConfig,
+  });
 }

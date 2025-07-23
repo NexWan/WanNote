@@ -37,7 +37,9 @@ export default function NewProjectView() {
         })
       );
       await message("Project saved successfully!", "Success");
+
       navigate(ROUTES.PROJECT_VIEW, { state: { projectPath: filePath } });
+
     } else {
       await message("Project save was cancelled.", "Info");
     }
