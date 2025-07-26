@@ -170,6 +170,7 @@ function ProjectLayout({ project }: { project: ProjectStructure }) {
             onSave={() => {}} 
             title={noteTitle}
             setTitle={setNoteTitle}
+            projectPath={project.path}
           />
         )}
       </section>
