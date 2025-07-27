@@ -27,10 +27,29 @@ export async function loadOrCreateSettings(): Promise<AppSettings> {
   });
 
   if (fileExists) {
-    const content = await readTextFile(CONFIG_FILE_NAME, {
-      baseDir: BaseDirectory.AppConfig,
-    });
-    return JSON.parse(content) as AppSettings;
+    try {
+      const content = await readTextFile(CONFIG_FILE_NAME, {
+        baseDir: BaseDirectory.AppConfig,
+      });
+      
+      const parsed = JSON.parse(content) as AppSettings;
+      
+      // Validate that required properties exist
+      if (typeof parsed.firstTimeSetup !== 'boolean' || 
+          typeof parsed.theme !== 'string' || 
+          typeof parsed.font !== 'string') {
+        throw new Error('Invalid settings structure');
+      }
+      
+      return parsed;
+    } catch (error) {
+      console.warn('Settings file corrupted, recreating with defaults:', error);
+      // If JSON parsing fails or structure is invalid, recreate with defaults
+      await writeTextFile(CONFIG_FILE_NAME, JSON.stringify(defaultSettings, null, 2), {
+        baseDir: BaseDirectory.AppConfig,
+      });
+      return defaultSettings;
+    }
   } else {
     await mkdir('', { recursive: true, baseDir: BaseDirectory.AppConfig });
     await writeTextFile(CONFIG_FILE_NAME, JSON.stringify(defaultSettings, null, 2), {

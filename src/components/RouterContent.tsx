@@ -197,7 +197,7 @@ function RouterContent() {
             // Clear the invalid last opened project
             const updatedSettings = {
               ...loadedSettings,
-              lastOpenedProject: "",
+              lastOpenedProject: undefined,
             };
             await saveSettings(updatedSettings);
             setSettings(updatedSettings);
@@ -205,14 +205,12 @@ function RouterContent() {
         }
       } catch (error) {
         console.error("Error initializing settings:", error);
-        // Create default settings if initialization fails
-        const defaultSettings: AppSettings = {
+        // Fallback to default settings if all else fails
+        setSettings({
           firstTimeSetup: true,
-          lastOpenedProject: "",
           theme: "night",
           font: "Fredoka",
-        };
-        setSettings(defaultSettings);
+        });
         setIsFirstTime(true);
       }
     };
