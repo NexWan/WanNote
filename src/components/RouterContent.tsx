@@ -127,11 +127,6 @@ function RouterContent() {
               navigate(ROUTES.NEW_PROJECT, { replace: true });
             },
           }),
-          await MenuItem.new({
-            id: "save",
-            text: "Save the current project",
-            // lógica de guardado
-          }),
           await PredefinedMenuItem.new({ item: "Quit" }),
         ],
       });
@@ -162,7 +157,6 @@ function RouterContent() {
     setupMenu();
   }, [navigate, refreshContent, settings]);
 
-  // ✅ Cargar settings y redirigir a proyecto si ya hay uno
   useEffect(() => {
     const init = async () => {
       try {

@@ -17,6 +17,8 @@
     "dialog:default",
     "fs:scope-home",
     "fs:scope-home-recursive",
-    "fs:scope-home-index"
+    "fs:scope-home-index",
+    "core:window:allow-close",
+    "core:window:allow-destroy"
   ]
 }
