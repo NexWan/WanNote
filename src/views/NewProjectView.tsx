@@ -1,11 +1,15 @@
 import {NewButton} from "../components/buttons";
 import { save, message } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
-import { Note } from "../types/WanTypes";
+import { Note, ProjectStructure } from "../types/WanTypes";
 import { ROUTES } from "../constants/routes";
 import { useNavigate } from "react-router-dom";
+import DialogProject from "../components/DialogProject";
+import { useState } from "react";
 
 export default function NewProjectView() {
+  const [showDialog, setShowDialog] = useState(false);
+
   const defaultNote: Note = {
     id: "1",
     title: "Welcome Note",
@@ -18,31 +22,21 @@ export default function NewProjectView() {
 
   const navigate = useNavigate();
 
-  async function handleSaveProject() {
-    const filePath = await save({
-      defaultPath: "new_project.wan", // this is just a json file but with a custom extension :D
-      filters: [{ name: "WanNote Project", extensions: ["wan"] }],
-    });
-
-    if (filePath) {
-      await writeTextFile(
-        filePath,
-        JSON.stringify({
-          name: "New Project",
-          description: "This is a new project created in WanNote.",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          notes: [defaultNote],
-          path: filePath,
-        })
-      );
-      await message("Project saved successfully!", "Success");
-
-      navigate(ROUTES.PROJECT_VIEW, { state: { projectPath: filePath } });
-
-    } else {
-      await message("Project save was cancelled.", "Info");
+  async function handleSaveProject(project: ProjectStructure) {
+    console.log("Saving project:", project);
+    if (project) {
+      project.notes = [defaultNote]; // Add default note to the project
+      try {
+        await writeTextFile(project.path, JSON.stringify(project, null, 2));
+        console.log("Project saved successfully!");
+        message("Project created successfully!", "Success");
+        navigate(ROUTES.PROJECT_VIEW, { state: { projectPath: project.path } });
+      } catch (error) {
+        console.error("Error saving project:", error);
+        message("Failed to create project.", "Error");
+      }
     }
+     // navigate(ROUTES.PROJECT_VIEW, { state: { projectPath: filePath } });
   }
 
   return (
@@ -50,10 +44,16 @@ export default function NewProjectView() {
       <h1 className="text-3xl font-bold underline">Create a New Project</h1>
       <p className="mt-4">This is where you can create a new project.</p>
       <NewButton
-        onClick={() => handleSaveProject()}
+        onClick={() => setShowDialog(true)}
         label="Start New Project"
         className="mt-6"
       />
+      {showDialog && (
+        <DialogProject
+          onClose={() => setShowDialog(false)}
+          onSave={handleSaveProject }
+        />
+      )}
     </main>
   );
 }

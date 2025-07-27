@@ -4,8 +4,12 @@ import FirstTimeView from "../views/FirstTimeView";
 import NewProjectView from "../views/NewProjectView";
 import ProjectView from "../views/ProjectView";
 import { ROUTES } from "../constants/routes";
-import { loadOrCreateSettings, AppSettings, saveSettings } from "../lib/settings";
-import { Menu, MenuItem, Submenu } from "@tauri-apps/api/menu";
+import {
+  loadOrCreateSettings,
+  AppSettings,
+  saveSettings,
+} from "../lib/settings";
+import { Menu, MenuItem, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
 import { message, open } from "@tauri-apps/plugin-dialog";
 import { ProjectStructure } from "../types/WanTypes";
 import { readTextFile } from "@tauri-apps/plugin-fs";
@@ -19,11 +23,23 @@ function RouterContent() {
 
   // Force refresh function to trigger re-renders
   const refreshContent = useCallback(() => {
-    setForceRefresh(prev => prev + 1);
+    setForceRefresh((prev) => prev + 1);
   }, []);
 
   useEffect(() => {
     const setupMenu = async () => {
+      const editSubmenu = await Submenu.new({
+        text: "Edit",
+        items: [
+          await PredefinedMenuItem.new({ item: "Undo" }),
+          await PredefinedMenuItem.new({ item: "Redo" }),
+          await PredefinedMenuItem.new({ item: "Separator" }),
+          await PredefinedMenuItem.new({ item: "Cut" }),
+          await PredefinedMenuItem.new({ item: "Copy" }),
+          await PredefinedMenuItem.new({ item: "Paste" }),
+          await PredefinedMenuItem.new({ item: "SelectAll" }),
+        ],
+      });
       const fileSubmenu = await Submenu.new({
         text: "File",
         items: [
@@ -31,20 +47,75 @@ function RouterContent() {
             id: "open",
             text: "Open an existing project",
             action: async () => {
-              const filePath = await open({
-                filters: [{ name: "WanNote Project", extensions: ["wan"] }],
-              });
-              if (filePath) {
-                const project: ProjectStructure = JSON.parse(await readTextFile(filePath));
-                console.log("Project loaded:", project);
-                // Force refresh and navigate
-                refreshContent();
-                navigate(ROUTES.PROJECT_VIEW, { 
-                  state: { projectPath: filePath, timestamp: Date.now() },
-                  replace: true 
+              try {
+                const filePath = await open({
+                  filters: [{ name: "WanNote Project", extensions: ["wan"] }],
                 });
-              } else {
-                await message("No project selected.", "Info");
+
+                if (filePath) {
+                  try {
+                    const fileContent = await readTextFile(filePath);
+
+                    // Validate that file content is not empty
+                    if (!fileContent.trim()) {
+                      await message(
+                        "The selected file is empty or corrupted.",
+                        "Error"
+                      );
+                      return;
+                    }
+
+                    // Parse JSON with error handling
+                    const project: ProjectStructure = JSON.parse(fileContent);
+
+                    // Basic validation of project structure
+                    if (!project.name || !project.path) {
+                      await message("Invalid project file format.", "Error");
+                      return;
+                    }
+
+                    console.log("Project loaded:", project);
+
+                    // Update settings with last opened project
+                    if (settings) {
+                      const updatedSettings = {
+                        ...settings,
+                        lastOpenedProject: filePath,
+                      };
+                      await saveSettings(updatedSettings);
+                      setSettings(updatedSettings);
+                    }
+
+                    // Force refresh and navigate
+                    refreshContent();
+                    navigate(ROUTES.PROJECT_VIEW, {
+                      state: { projectPath: filePath, timestamp: Date.now() },
+                      replace: true,
+                    });
+                  } catch (parseError) {
+                    console.error("Error parsing project file:", parseError);
+                    await message(
+                      `Failed to open project file. The file may be corrupted or in an invalid format.\n\nError: ${
+                        parseError instanceof Error
+                          ? parseError.message
+                          : "Unknown error"
+                      }`,
+                      "Error"
+                    );
+                  }
+                } else {
+                  await message("No project selected.", "Info");
+                }
+              } catch (fileError) {
+                console.error("Error reading file:", fileError);
+                await message(
+                  `Failed to read the project file.\n\nError: ${
+                    fileError instanceof Error
+                      ? fileError.message
+                      : "Unknown error"
+                  }`,
+                  "Error"
+                );
               }
             },
           }),
@@ -61,11 +132,7 @@ function RouterContent() {
             text: "Save the current project",
             // lógica de guardado
           }),
-          await MenuItem.new({
-            id: "exit",
-            text: "Exit",
-            // lógica de salida
-          }),
+          await PredefinedMenuItem.new({ item: "Quit" }),
         ],
       });
 
@@ -86,30 +153,67 @@ function RouterContent() {
       });
 
       const menu = await Menu.new({
-        items: [aboutSubmenu, fileSubmenu],
+        items: [aboutSubmenu, fileSubmenu, editSubmenu],
       });
 
       await menu.setAsAppMenu();
     };
 
     setupMenu();
-  }, [navigate, refreshContent]);
+  }, [navigate, refreshContent, settings]);
 
   // ✅ Cargar settings y redirigir a proyecto si ya hay uno
   useEffect(() => {
     const init = async () => {
-      const loadedSettings = await loadOrCreateSettings();
-      setSettings(loadedSettings);
-      setIsFirstTime(loadedSettings.firstTimeSetup);
-      if (loadedSettings.firstTimeSetup) {
-        loadedSettings.firstTimeSetup = false;
-        await saveSettings(loadedSettings);
-      }
-      if (loadedSettings.lastOpenedProject) {
-        navigate(ROUTES.PROJECT_VIEW, {
-          state: { projectPath: loadedSettings.lastOpenedProject, timestamp: Date.now() },
-          replace: true
-        });
+      try {
+        const loadedSettings = await loadOrCreateSettings();
+        setSettings(loadedSettings);
+        setIsFirstTime(loadedSettings.firstTimeSetup);
+
+        if (loadedSettings.firstTimeSetup) {
+          loadedSettings.firstTimeSetup = false;
+          await saveSettings(loadedSettings);
+        }
+
+        if (loadedSettings.lastOpenedProject) {
+          try {
+            // Validate that the last opened project still exists and is valid
+            const fileContent = await readTextFile(
+              loadedSettings.lastOpenedProject
+            );
+            const project: ProjectStructure = JSON.parse(fileContent);
+
+            if (project.name && project.path) {
+              navigate(ROUTES.PROJECT_VIEW, {
+                state: {
+                  projectPath: loadedSettings.lastOpenedProject,
+                  timestamp: Date.now(),
+                },
+                replace: true,
+              });
+            }
+          } catch (error) {
+            console.warn("Last opened project is invalid or missing:", error);
+            // Clear the invalid last opened project
+            const updatedSettings = {
+              ...loadedSettings,
+              lastOpenedProject: "",
+            };
+            await saveSettings(updatedSettings);
+            setSettings(updatedSettings);
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing settings:", error);
+        // Create default settings if initialization fails
+        const defaultSettings: AppSettings = {
+          firstTimeSetup: true,
+          lastOpenedProject: "",
+          theme: "night",
+          font: "Fredoka",
+        };
+        setSettings(defaultSettings);
+        setIsFirstTime(true);
       }
     };
 
@@ -133,9 +237,11 @@ function RouterContent() {
         element={isFirstTime ? <FirstTimeView /> : <NewProjectView />}
       />
       <Route path={ROUTES.NEW_PROJECT} element={<NewProjectView />} />
-      <Route 
-        path={ROUTES.PROJECT_VIEW} 
-        element={<ProjectView key={location.state?.timestamp || forceRefresh} />} 
+      <Route
+        path={ROUTES.PROJECT_VIEW}
+        element={
+          <ProjectView key={location.state?.timestamp || forceRefresh} />
+        }
       />
     </Routes>
   );
