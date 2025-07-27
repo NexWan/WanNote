@@ -6,6 +6,8 @@ import rehypeRaw from "rehype-raw";
 import { SaveButton } from "./buttons";
 import { writeFile, exists, mkdir, readFile } from "@tauri-apps/plugin-fs";
 import { join, dirname } from "@tauri-apps/api/path";
+import Popup from "./Popup";
+import { AnimationType } from "./Popup";
 
 const ATTACHMENTS_DIR = "attachments";
 
@@ -31,6 +33,18 @@ function NoteLayout({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   const [imageCache, setImageCache] = useState<Map<string, string>>(new Map());
+  const [popupProps, setPopupProps] = useState<{
+    name?: string;
+    title?: string;
+    content: string;
+    closePopup: () => void;
+    width?: string;
+    height?: string;
+    showCloseButton?: boolean;
+    animationType: AnimationType;
+  animationDuration?: number;
+  } | null>(null);
+
 
   const insertTab = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Tab") {
@@ -99,8 +113,18 @@ function NoteLayout({
       content,
       updatedAt: new Date().toISOString(),
     };
+    setPopupProps({
+      name: "SuccessPopup",
+      title: "Note Saved",
+      content: `Note "${title}" has been saved successfully.`,
+      closePopup: () => setPopupProps(null),
+      animationType: AnimationType.FADE,
+      animationDuration: 5000,
+    });
     onSave(updatedNote);
   };
+
+
 
   const handleTitleClick = () => setIsEditingTitle(true);
 
@@ -222,9 +246,15 @@ function NoteLayout({
         </div>
       </section>
 
-      <footer className="note-footer mt-2 self-start bottom-0">
+      <footer className="note-footer mt-2 self-center bottom-0">
         <SaveButton onClick={handleSave} label="Save Note" className="mt-2" />
       </footer>
+
+      {popupProps && (
+        <Popup
+          {...popupProps}
+        />
+      )}
     </div>
   );
 }

@@ -17,6 +17,8 @@ function ProjectLayout({ project }: { project: ProjectStructure }) {
 
   const [noteTitle, setNoteTitle] = useState<string>(notes[0]?.title || "");
 
+  const [visibleHeader, setVisibleHeader] = useState(true);
+
   useEffect(() => {
     if (notes.length > 0) {
       setActiveNoteIndex(0);
@@ -101,73 +103,102 @@ function ProjectLayout({ project }: { project: ProjectStructure }) {
   };
 
   return (
-    <div className="flex flex-row w-full justify-center items-center h-full">
-      <header className="project-header container p-4 h-full w-1/4 self-start place-self-start border-r border-gray-700 pr-4">
-        {editingName ? (
-          <input
-            className="text-2xl font-bold bg-transparent border-b border-gray-500 focus:outline-none w-full"
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            onBlur={() => setEditingName(false)}
-            autoFocus
-          />
-        ) : (
-          <h1
-            className="text-2xl font-bold cursor-pointer"
-            onClick={() => setEditingName(true)}
+    <div className="flex flex-row w-full justify-center items-center h-full relative">
+      <button 
+        onClick={() => setVisibleHeader(!visibleHeader)} 
+        className={`fixed bottom-4 z-10 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 border border-gray-600 ${
+          visibleHeader ? 'left-4' : 'left-4'
+        }`}
+      >
+        <span className="flex items-center gap-2">
+          <svg 
+            className={`w-4 h-4 transition-transform duration-300 ${visibleHeader ? 'rotate-180' : ''}`} 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
           >
-            {projectName}
-          </h1>
-        )}
-
-        {editingDescription ? (
-          <input
-            className="bg-transparent border-b border-gray-500 focus:outline-none w-full"
-            value={projectDescription}
-            onChange={(e) => setProjectDescription(e.target.value)}
-            onBlur={() => setEditingDescription(false)}
-            autoFocus
-          />
-        ) : (
-          <p
-            className="cursor-pointer text-sm text-gray-400"
-            onClick={() => setEditingDescription(true)}
-          >
-            {projectDescription || <em>No description</em>}
-          </p>
-        )}
-
-        <small className="block">Project path: {project.path}</small>
-        <small>Created at: {new Date(project.createdAt).toLocaleDateString()}</small>
-        <small>Last updated: {new Date(project.updatedAt).toLocaleDateString()}</small>
-
-        <ul>
-          {notes.map((note, index) => (
-            <li
-              key={note.id}
-              className="my-2 hover:cursor-pointer hover:scale-105 transition-all"
-              onClick={() => handleSwitchNote(index)}
-            >
-              <strong>{note.title}</strong> -{" "}
-              {new Date(note.updatedAt).toLocaleDateString()}
-            </li>
-          ))}
-        </ul>
-
-        <span className="flex items-center justify-center gap-x-2 mt-4 hover:scale-105 transition-all cursor-pointer text-blue-500">
-          <PlusCircleOutlined onClick={createNewNote} />
-          <p>Create New Note</p>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          <span className="text-sm font-medium">
+            {visibleHeader ? "Hide" : "Show"} Details
+          </span>
         </span>
+      </button>
+
+      <header className={`project-header container p-4 h-full border-r border-gray-700 pr-4 transition-all duration-500 ease-in-out overflow-hidden ${
+        visibleHeader 
+          ? 'w-1/4 opacity-100 transform translate-x-0' 
+          : 'w-0 opacity-0 transform -translate-x-full'
+      }`}>
+        <div className={`transition-opacity duration-300 ${visibleHeader ? 'opacity-100' : 'opacity-0'}`}>
+          {editingName ? (
+            <input
+              className="text-2xl font-bold bg-transparent border-b border-gray-500 focus:outline-none w-full"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              onBlur={() => setEditingName(false)}
+              autoFocus
+            />
+          ) : (
+            <h1
+              className="text-2xl font-bold cursor-pointer"
+              onClick={() => setEditingName(true)}
+            >
+              {projectName}
+            </h1>
+          )}
+
+          {editingDescription ? (
+            <input
+              className="bg-transparent border-b border-gray-500 focus:outline-none w-full"
+              value={projectDescription}
+              onChange={(e) => setProjectDescription(e.target.value)}
+              onBlur={() => setEditingDescription(false)}
+              autoFocus
+            />
+          ) : (
+            <p
+              className="cursor-pointer text-sm text-gray-400"
+              onClick={() => setEditingDescription(true)}
+            >
+              {projectDescription || <em>No description</em>}
+            </p>
+          )}
+
+          <small className="block">Project path: {project.path}</small>
+          <small>Created at: {new Date(project.createdAt).toLocaleDateString()}</small>
+          <small>Last updated: {new Date(project.updatedAt).toLocaleDateString()}</small>
+
+          <ul>
+            {notes.map((note, index) => (
+              <li
+                key={note.id}
+                className="my-2 hover:cursor-pointer hover:scale-105 transition-all"
+                onClick={() => handleSwitchNote(index)}
+              >
+                <strong>{note.title}</strong> -{" "}
+                {new Date(note.updatedAt).toLocaleDateString()}
+              </li>
+            ))}
+          </ul>
+
+          <span className="flex items-center justify-center gap-x-2 mt-4 hover:scale-105 transition-all cursor-pointer text-blue-500">
+            <PlusCircleOutlined onClick={createNewNote} />
+            <p>Create New Note</p>
+          </span>
+        </div>
       </header>
 
-      <section className="project-notes bg-base-300 h-full w-3/4 flex items-center justify-center">
+      <section className={`project-notes bg-base-300 h-full flex items-center justify-center transition-all duration-500 ease-in-out ${
+        visibleHeader ? 'w-3/4' : 'w-full'
+      }`}>
         {notes[activeNoteIndex] && (
           <NoteLayout
             key={notes[activeNoteIndex].id}
             note={notes[activeNoteIndex]}
             content={activeContent}
             setContent={setActiveContent}
-            onSave={() => {}} 
+            onSave={handleSaveAll} 
             title={noteTitle}
             setTitle={setNoteTitle}
             projectPath={project.path}
